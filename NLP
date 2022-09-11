@@ -1,0 +1,103 @@
+import time
+from collections import defaultdict
+import numpy as np
+
+
+def openFile(str, transitions, size):
+    data = textProcessing((open(str).read()))
+    samples = sliceCorpus(data, size)
+    collectTransitions(transitions, samples, size)
+
+
+def textProcessing(data):
+    #print(type(data))
+    alp1 = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+    alp2 = alp1.upper()
+    extraSymb = "-,.?!-– \n"
+    myTuple = (alp1, alp2, extraSymb)
+    alp = "".join(myTuple)
+    data2 = ""
+    for c in data:
+        if c in alp:
+            if(c == '\n'):
+                data2 += ' '
+            else:
+                data2 += c
+
+    data2 = " ".join(data2.split())
+    data2 = delExtra(data2.lower()).split()
+    return data2
+
+
+def delExtra(str):
+    x = ""
+    y = ""
+    z = "+-_!.?&*%^#$@()–:;"
+    myTable = str.maketrans(x, y, z)
+    return str.translate(myTable)
+
+
+def sliceCorpus(corpus, size):
+    samples = (corpus[idx: idx + size] for idx, _ in enumerate(corpus))
+    return [s for s in samples if len(s) == size]
+
+
+def collectTransitions(transitions, samples, size):
+    for sample in samples:
+        pref = " ".join(sample[:-1])
+        #print(pref)
+        next_ = sample[size - 1]
+        transitions[pref][next_] += 1
+    return transitions
+
+#, trWords, trProb
+def collectNextWord(transitions): # transitWords, transitProbabilities
+    for pref in transitions.keys():
+        keySum = 0
+        prob = []
+        words = []
+        for nxt in transitions[pref]:
+            keySum += transitions[pref][nxt]
+            words.append(nxt)
+            prob.append(transitions[pref][nxt])
+        for idx in range(0, len(prob)):
+            prob[idx] /= keySum
+        trWords[pref], trProb[pref] = words, prob
+
+def predictNext(chain, trWords, trProb, size):
+    ln = len(chain)
+    pref = " ".join(chain[max(0, ln - size + 1):])
+
+    possibleWords = trWords[pref]
+    return np.random.choice(possibleWords, None, True, trProb[pref]) if possibleWords else ""
+
+
+def createChain(startText, trWords, size):
+    st = np.random.choice(list(trWords.keys())).split()
+    return st
+
+
+def generateChain(chain, trWords, trProb, size):
+    chain = createChain(chain, trWords, size)
+    print(chain)
+    while True:
+        newWord = predictNext(chain, trWords, trProb, size)
+        chain.append(newWord)
+        print(newWord)
+        #print("l", newWord, "l", sep='')
+        time.sleep(1.5)
+        # yield newWord
+
+
+size = int(input())
+L = ["PrNa.txt", "poslovitsi.txt", "WnP1.txt"]
+transitions = defaultdict(lambda: defaultdict(int))
+for str in L:
+    openFile(str, transitions, size)
+
+trWords = defaultdict(list)
+trProb = defaultdict(list)
+collectNextWord(transitions)
+
+#s = input().split()
+generateChain(("против"), trWords, trProb, size)
