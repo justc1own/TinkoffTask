@@ -99,5 +99,5 @@ trWords = defaultdict(list)
 trProb = defaultdict(list)
 collectNextWord(transitions)
 
-#s = input().split()
-generateChain(("против"), trWords, trProb, size)
+s = input().split() #useless
+generateChain(s, trWords, trProb, size)
